@@ -1,6 +1,4 @@
-
-import mongoose from "mongoose";
-
+const mongoose = require("mongoose");
 const messageSchema = new mongoose.Schema({
   roomId: String,
 
@@ -13,12 +11,12 @@ const messageSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["sent", "delivered", "read"],
-    default: "sent"
+    default: "sent",
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 export const Message = mongoose.model("Message", messageSchema);
