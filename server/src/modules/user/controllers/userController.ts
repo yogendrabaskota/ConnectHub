@@ -1,0 +1,65 @@
+import User from "../models/userModels";
+import { Request, Response } from "express";
+
+class UserController {
+  async registerUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, phoneNum, name, password, role } = req.body;
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        res.status(400).json({ message: "User already exists" });
+        return;
+      }
+      const newUser = new User({ email, phoneNum, name, password, role });
+      await newUser.save();
+      res
+        .status(201)
+        .json({ message: "User registered successfully", user: newUser });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error });
+    }
+  }
+
+  async getUser(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.params.id;
+      const user = await User.findById(userId).select(
+        "-password -otp -isOtpVerified"
+      );
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+      res.status(200).json({ user });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error });
+    }
+  }
+
+  async loginUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, password } = req.body;
+      const user = await User.findOne({ email }).select(
+        "+password +isOtpVerified"
+      );
+      if (!user) {
+        res.status(400).json({ message: "Invalid email or password" });
+        return;
+      }
+      if (user.password !== password) {
+        res.status(400).json({ message: "Invalid email or password" });
+        return;
+      }
+      if (!user.isOtpVerified) {
+        res.status(400).json({ message: "OTP not verified" });
+        return;
+      }
+      res.status(200).json({ message: "Login successful", user });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error });
+    }
+  }
+}
+export default new UserController();
