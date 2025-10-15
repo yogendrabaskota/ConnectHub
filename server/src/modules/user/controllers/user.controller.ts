@@ -37,17 +37,23 @@ class UserController {
 
   async getUser(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.params.id;
-      const user = await User.findById(userId).select(
-        "-password -otp -isOtpVerified"
-      );
-      if (!user) {
-        res.status(404).json({ message: "User not found" });
+      // const userId = req.params.id;
+      const user = await User.find().select("-password -otp -isOtpVerified");
+      if (user.length === 0 || !user) {
+        res.status(404).json({
+          message: "User not found",
+        });
         return;
       }
-      res.status(200).json({ user });
+      res.status(200).json({
+        message: "User fetched successfully",
+        user,
+      });
     } catch (error) {
-      res.status(500).json({ message: "Server error", error });
+      res.status(500).json({
+        message: "Server error",
+        error,
+      });
     }
   }
 

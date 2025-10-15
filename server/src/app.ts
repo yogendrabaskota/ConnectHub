@@ -34,8 +34,10 @@ app.get("/", (req, res) => {
   });
 });
 
-import userRoutes from "./modules/user/routes/userRoute";
+import userRoutes from "./modules/user/routes/user.route";
+import messageRoutes from "./modules/message/routes/message.route";
 
 app.use("/api/users", userRoutes);
+app.use("/api/messages", messageRoutes);
 
 export default app;
