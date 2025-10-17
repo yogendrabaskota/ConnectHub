@@ -1,7 +1,7 @@
 import express, { Router } from "express";
 import messageController from "../controllers/message.controller";
 import { validate } from "../../../middlewares/validate";
-import { sendMessageSchema } from "../utils/message.validate";
+import { sendMessageSchema } from "../utils/message.validation";
 import authMiddleware from "../../../middlewares/auth.middleware";
 
 const router: Router = express.Router();
