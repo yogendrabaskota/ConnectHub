@@ -36,20 +36,20 @@ app.get("/", (req, res) => {
 
 import userRoutes from "./modules/user/routes/user.route";
 import messageRoutes from "./modules/message/routes/message.route";
-import redis from "./config/redis";
+// import redis from "./config/redis";
 
 app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 
 // Test Redis connection
-(async () => {
-  try {
-    await redis.set("testKey", "Hello Redis!");
-    const value = await redis.get("testKey");
-    console.log("Value from Redis:", value);
-  } catch (err) {
-    console.error("Redis test failed:", err);
-  }
-})();
+// (async () => {
+//   try {
+//     await redis.set("testKey", "Hello Redis!");
+//     const value = await redis.get("testKey");
+//     console.log("Value from Redis:", value);
+//   } catch (err) {
+//     console.error("Redis test failed:", err);
+//   }
+// })();
 
 export default app;

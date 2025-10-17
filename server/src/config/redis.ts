@@ -5,6 +5,7 @@ const redis = new Redis({
   port: Number(process.env.REDIS_PORT) || 14484,
   username: process.env.REDIS_USERNAME ?? "default",
   password: process.env.REDIS_PASSWORD ?? "",
+  lazyConnect: true,
 });
 
 redis.on("connect", () => {

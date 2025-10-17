@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Message from "../models/message.model";
 import { AuthRequest } from "../../../middlewares/auth.middleware";
 import redis from "../../../config/redis";
+import { io } from "../../../../server";
 
 class MessageController {
   // create message
@@ -10,6 +11,12 @@ class MessageController {
       const userId = req.user?._id;
       const { receiver, content } = req.body;
 
+      if (!userId) {
+        res.status(401).json({
+          message: "Unauthorized",
+        });
+        return;
+      }
       const newMessage = new Message({
         sender: userId,
         receiver,
@@ -21,6 +28,10 @@ class MessageController {
       // Invalidate cache for this conversation
       const conversationKey = `messages:${[userId, receiver].sort().join(":")}`;
       await redis.del(conversationKey);
+
+      // 🔥 Emit socket event to both sender and receiver
+      if (receiver) io.to(receiver.toString()).emit("newMessage", newMessage);
+      if (userId) io.to(userId.toString()).emit("newMessage", newMessage);
 
       res.status(201).json({
         message: "Message sent successfully",
@@ -107,6 +118,11 @@ class MessageController {
         .join(":")}`;
       await redis.del(conversationKey);
 
+      if (message?.receiver)
+        io.to(message.receiver.toString()).emit("messageUpdated", message);
+      if (message?.sender)
+        io.to(message.sender.toString()).emit("messageUpdated", message);
+
       res.status(200).json({
         message: "Message marked as read",
         data: message,
@@ -135,9 +151,19 @@ class MessageController {
         .join(":")}`;
       await redis.del(conversationKey);
 
-      res.status(200).json({ message: "Message deleted successfully" });
+      if (message?.receiver)
+        io.to(message.receiver.toString()).emit("messageUpdated", message);
+      if (message?.sender)
+        io.to(message.sender.toString()).emit("messageUpdated", message);
+
+      res.status(200).json({
+        message: "Message deleted successfully",
+      });
     } catch (error) {
-      res.status(500).json({ message: "Server error", error });
+      res.status(500).json({
+        message: "Server error",
+        error,
+      });
     }
   }
 
@@ -164,9 +190,15 @@ class MessageController {
         .join(":")}`;
       await redis.del(conversationKey);
 
-      res
-        .status(200)
-        .json({ message: "Message soft deleted successfully", data: message });
+      if (message?.receiver)
+        io.to(message.receiver.toString()).emit("messageUpdated", message);
+      if (message?.sender)
+        io.to(message.sender.toString()).emit("messageUpdated", message);
+
+      res.status(200).json({
+        message: "Message soft deleted successfully",
+        data: message,
+      });
     } catch (error) {
       res.status(500).json({ message: "Server error", error });
     }
@@ -214,7 +246,10 @@ class MessageController {
         messages,
       });
     } catch (error) {
-      res.status(500).json({ message: "Server error", error });
+      res.status(500).json({
+        message: "Server error",
+        error,
+      });
     }
   }
 }
