@@ -15,8 +15,10 @@ const io = new Server(httpServer, {
 });
 
 (async () => {
-  await redis.connect();
-  console.log("Main Redis connected ✅");
+  if (!(redis as any).isOpen) {
+    await redis.connect();
+    console.log("Main Redis connected!!");
+  }
 
   const pubClient = redis.duplicate();
   const subClient = redis.duplicate();
@@ -24,7 +26,7 @@ const io = new Server(httpServer, {
   await Promise.all([pubClient.connect(), subClient.connect()]);
 
   io.adapter(createAdapter(pubClient, subClient));
-  console.log("Redis adapter connected ✅");
+  console.log("Redis adapter connected!");
 
   io.on("connection", (socket: any) => {
     console.log("A user connected:", socket.id);
@@ -32,6 +34,23 @@ const io = new Server(httpServer, {
     socket.on("joinRoom", (userId: string) => {
       socket.join(userId);
       console.log(`User ${userId} joined room`);
+    });
+
+    // Handle typing indicator
+    socket.on(
+      "typing",
+      (data: { from: string; to: string; isTyping: boolean }) => {
+        io.to(data.to).emit("typing", {
+          from: data.from,
+          isTyping: data.isTyping,
+        });
+      }
+    );
+
+    socket.on("stopTyping", (data: { to: string }) => {
+      socket.to(data.to).emit("stopTyping", {
+        from: socket.id,
+      });
     });
 
     socket.on("disconnect", () => {

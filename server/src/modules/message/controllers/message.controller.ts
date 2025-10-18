@@ -252,6 +252,119 @@ class MessageController {
       });
     }
   }
+
+  // get user conversations
+  async getUserConversations(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?._id;
+      const conversations = await Message.aggregate([
+        { $match: { $or: [{ sender: userId }, { receiver: userId }] } },
+        { $sort: { createdAt: -1 } },
+        {
+          $group: {
+            _id: {
+              $cond: [{ $eq: ["$sender", userId] }, "$receiver", "$sender"],
+            },
+            lastMessage: { $first: "$$ROOT" },
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "_id",
+            as: "userInfo",
+          },
+        },
+        { $unwind: "$userInfo" },
+        {
+          $project: {
+            _id: 0,
+            user: "$userInfo",
+            lastMessage: 1,
+          },
+        },
+      ]);
+      res.status(200).json({
+        message: "Conversations retrieved successfully",
+        conversations,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Server error",
+        error,
+      });
+    }
+  }
+
+  // get unread messages count for the authenticated user
+  // async getUnreadMessagesCount(req: AuthRequest, res: Response): Promise<void> {
+  //   try {
+  //     const userId = req.user?._id;
+  //     const count = await Message.countDocuments({
+  //       receiver: userId,
+  //       isRead: false,
+  //     });
+
+  //     const displayCount = count > 9 ? "9+" : count;
+
+  //     res.status(200).json({
+  //       message: "Unread messages count retrieved successfully",
+  //       count: displayCount,
+  //       total: count, // actual count
+  //     });
+  //   } catch (error) {
+  //     res.status(500).json({
+  //       message: "Server error",
+  //       error,
+  //     });
+  //   }
+  // }
+
+  async getUnreadMessages(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?._id;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
+
+      const messages = await Message.find({
+        receiver: userId,
+        isRead: false,
+      })
+        .sort({ createdAt: -1 }) // latest first
+        .skip(skip)
+        .limit(limit)
+        .populate("sender", "name email")
+        .lean();
+
+      // Count total unread messages
+      const totalUnread = await Message.countDocuments({
+        receiver: userId,
+        isRead: false,
+      });
+
+      // Display 9+ if greater than 9
+      const displayCount = totalUnread > 9 ? "9+" : totalUnread;
+
+      res.status(200).json({
+        success: true,
+        message: "Unread messages retrieved successfully",
+        count: displayCount,
+        totalUnread,
+        currentPage: page,
+        totalPages: Math.ceil(totalUnread / limit),
+        messages,
+      });
+    } catch (error) {
+      console.error("Error fetching unread messages:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error",
+        error,
+      });
+    }
+  }
 }
 
 export default new MessageController();
