@@ -1,16 +1,28 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/dbconfig";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import compression from "compression";
+
+import userRoutes from "./modules/user/routes/user.route";
+import messageRoutes from "./modules/message/routes/message.route";
+
 const app = express();
 
 dotenv.config();
 
+// Connect to Database
 connectDB();
 
-app.use(helmet());
+// Middlewares
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false,
+  })
+);
 app.use(
   cors({
     origin: "*",
@@ -24,6 +36,7 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again later.",
 });
 app.use(limiter);
+app.use(compression());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -33,23 +46,44 @@ app.get("/", (req, res) => {
     message: "Server is running",
   });
 });
-
-import userRoutes from "./modules/user/routes/user.route";
-import messageRoutes from "./modules/message/routes/message.route";
-// import redis from "./config/redis";
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
 
 app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 
-// Test Redis connection
-// (async () => {
-//   try {
-//     await redis.set("testKey", "Hello Redis!");
-//     const value = await redis.get("testKey");
-//     console.log("Value from Redis:", value);
-//   } catch (err) {
-//     console.error("Redis test failed:", err);
-//   }
-// })();
+// Global Error Handler
+app.use(
+  (
+    err: any,
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Response | void => {
+    console.error("Error:", err);
+
+    const statusCode = err.statusCode || 500;
+    const message =
+      err.message || "Something went wrong on the server. Please try again.";
+
+    return res.status(statusCode).json({
+      success: false,
+      message,
+    });
+  }
+);
+
+// 404-ERROR Handler
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
 
 export default app;
