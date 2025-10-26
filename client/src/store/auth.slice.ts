@@ -74,7 +74,10 @@ export function loginUser(data: LoginData) {
 
       if (response.status === 200) {
         const token = response.data.token;
+        const role = response.data.user.role;
         localStorage.setItem("token", token);
+        localStorage.setItem("role", role);
+
         dispatch(setUser(response.data));
         dispatch(setStatus(Status.SUCCESS));
       } else {
