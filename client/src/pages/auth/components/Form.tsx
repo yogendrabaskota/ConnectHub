@@ -6,7 +6,7 @@ import type { Props, UserDataTypes } from "../types";
 const Form: React.FC<Props> = ({ type, onSubmit }) => {
   const [userData, setUserData] = useState<UserDataTypes>({
     email: "",
-    username: "",
+    name: "",
     password: "",
   });
 
@@ -70,8 +70,8 @@ const Form: React.FC<Props> = ({ type, onSubmit }) => {
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
                   type="text"
-                  name="username"
-                  value={userData.username}
+                  name="name"
+                  value={userData.name}
                   onChange={handleChange}
                   placeholder="Enter your username"
                   required

@@ -17,7 +17,7 @@ class UserController {
       }
       const newUser = new User({
         email,
-        phoneNum: phone,
+        phoneNum: phone ?? 9090,
         name,
         password,
         role,

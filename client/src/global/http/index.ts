@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "http://localhost:5544/api",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -9,7 +9,7 @@ const API = axios.create({
 });
 
 const APIAuth = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "http://localhost:5544/api",
   headers: {
     Authorization: `${localStorage.getItem("token")}`,
     "content-type": "application/json",

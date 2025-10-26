@@ -5,7 +5,7 @@ export interface Props {
 
 export interface UserDataTypes {
   email: string;
-  username: string;
+  name: string;
   password: string;
 }
 

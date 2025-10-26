@@ -25,7 +25,7 @@ const userSchema: Schema<IUser> = new Schema(
     },
     phoneNum: {
       type: String,
-      required: [true, "userPhoneNumber must be provided"],
+      // required: [true, "userPhoneNumber must be provided"],
     },
     name: {
       type: String,
